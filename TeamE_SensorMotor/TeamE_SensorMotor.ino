@@ -55,8 +55,8 @@ void loop()
 //  Serial.println(motor);
 //  Serial.print("control:");
 //  Serial.println(control);
-//  Serial.println("angle:");
-//  Serial.print(angle);
+//  Serial.print("angle:");
+//  Serial.println(angle);
 
 
   parseInput();
@@ -64,8 +64,8 @@ void loop()
   if(motor == 1) // Servo Motor Functions
   {
     if (control == 0){
-      report_state();
       servoIR();   //Servo Sensor Control
+      report_state();
       } 
     else if (control == 1 && newAngle) // Servo Serial Control
     {
@@ -77,9 +77,9 @@ void loop()
   
   else if(motor == 2) // Stepper Motor Functions
   {
-    if (control == 0) {
-      servoIR();   
+    if (control == 0) { 
       ultrastepper();
+      report_state();
       } // Stepper Sensor Control
     else if (control == 1 && newAngle)  // Stepper Serial Control
     {
@@ -105,10 +105,13 @@ void loop()
   void ultrastepper()
   {
     int Ultrasensor, Ultrainches;
+    float scale = 2;
+    float bias = 0;
 
     // read the analog output of the EZ1 from analog input 0
     Ultrasensor = analogRead(ultraPin);
-    Ultrainches = Ultrasensor / 2;
+//    Serial.println(Ultrasensor,DEC);
+    Ultrainches = (Ultrasensor + bias) / scale;
     sensor_reading = Ultrainches; 
     //Serial.println(inches,DEC);
     delay(1);
@@ -128,14 +131,14 @@ void serialStepper()
     if (n >= 0 && n <= 360)
     { //forward
       m = n * 4.444;
-      Serial.println(m);
+//      Serial.println(m);
       digitalWrite(stepperPinA, LOW);
       Stepping = true;
     }
     else
     { //reverse
       m = -n * 4.444;
-      Serial.println(m);
+//      Serial.println(m);
       digitalWrite(stepperPinA, HIGH);
       Stepping = true;
     }
@@ -166,9 +169,10 @@ void serialStepper()
 
   void servoIR()
   {
-    int IRdist =  averageFilter();
-    int new_pos = setServo(IRdist);
+    float IRdist =  averageFilter();
     sensor_reading = IRdist;
+    int new_pos = setServo(int(IRdist));
+
     myservo.write(new_pos);
   }
 
@@ -176,7 +180,6 @@ void serialStepper()
   float getIRdist()
   {
     int IRdist = analogRead(IRpin);       // reads the value of the sharp sensor
-    //  Serial.println(val);
     IRdist = (IRdist - 239.46) / 65.961;
     if (IRdist < -1) IRdist = 5;
     if (IRdist > IRhigh) IRdist = IRhigh;
@@ -195,8 +198,7 @@ void serialStepper()
       distance_filtered += getIRdist();
     }
     delay(50);
-    distance_filtered /= (num_points);
-
+    distance_filtered /= float(num_points);
     return distance_filtered;
   }
 
@@ -237,15 +239,14 @@ void parseInput()
   if (Serial.available() > 0) serialIn = Serial.readString();
   
   // Check if full input is received
-  if (serialIn.length() == 4)
+  if (serialIn.length() == 5)
   {
     // Extract first char from input
     //Serial.println(serialIn);
   char inChar = serialIn.charAt(0);
   serialIn.remove(0,1);
-    
     // Check if remaining is a number
-    if(serialIn.toInt()|| serialIn=="000")
+    if(serialIn.toInt() || (serialIn[0]=='0'&& serialIn[2]=='0'&& serialIn[1]=='0'))
     {
       // Convert String
       int newVal = serialIn.toInt();
