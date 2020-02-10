@@ -245,7 +245,7 @@ void parseInput()
   if (Serial.available() > 0) serialIn = Serial.readString();
   
   // Check if full input is received
-  if (serialIn.length() == 5)
+  if (serialIn.length() == 4)
   {
     // Extract first char from input
     //Serial.println(serialIn);
