@@ -1,5 +1,5 @@
 #include <Servo.h>
-
+#include <PID_v1.h>
 Servo myservo;  // create servo object to control a servo
 
 // Pin Definitions
@@ -10,6 +10,11 @@ const int stepperPinA = 8;
 const int stepperPinB = 9;
 const int ultraPin = 0;
 
+#define POT A1
+#define encoder0PinA  3
+#define encoder0PinB  4
+#define CW 5
+#define CCW 6
 
 // State Changing Variables
 int IRbuttonVal = 0;
@@ -34,6 +39,28 @@ String readString;
 int StepCounter = 0;
 int Stepping = false;
 
+// Encoder variables
+int encoder0PinALast = LOW;
+int n = LOW;
+
+int resolution = 322;
+int count = 0;
+
+// Pot variables
+float pot_gain = 100;
+float grad;
+
+// PID variables
+long int timestamp = 0;
+double Timer3_HZ = 100.0;
+int PWMmax;
+
+// PID Settings
+double Feed = 0;
+double Set = 0;
+double PWMvalue = 0;  //Computed PWM requirement
+double Kp, Ki, Kd;
+PID Motor_PID(&Feed, &PWMvalue, &Set, 0, 0, 0, DIRECT);
 
 
 void setup()
@@ -41,11 +68,26 @@ void setup()
   Serial.begin(9600);               // starts the serial monitor
   myservo.attach(servoPin);  // attaches the servo on pin 10 to the servo object
   pinMode(IRbuttonPin, INPUT);
+  pinMode (POT, INPUT);
+  pinMode(CCW, OUTPUT);
+  pinMode(CW, OUTPUT);
 
   pinMode(stepperPinA, OUTPUT);
   pinMode(stepperPinB, OUTPUT);
   digitalWrite(stepperPinB, LOW);
   digitalWrite(stepperPinA, LOW);
+
+  pinMode(encoder0PinA, INPUT);
+  digitalWrite(encoder0PinA, HIGH);
+  pinMode(encoder0PinB, INPUT);
+  digitalWrite(encoder0PinB, HIGH);
+  attachInterrupt(0, doEncoder, CHANGE);
+
+  PID_init();
+  timestamp = micros();
+
+  analogWrite(CCW, 0); // 0 is stop, 255 is max speed
+  analogWrite(CW, 0);
 }
 
 void loop()
@@ -90,11 +132,16 @@ void loop()
 
   else if(motor == 3) // DC Brushless Motor Functions
   {
-    if (control == 0) Serial.println("Brushless Sensor Func"); // Brushless Sensor Control
+    if (control == 0) {
+      Serial.println("Brushless Sensor Func"); // Brushless Sensor Control
+      DC_vel_control();
+    
+    }
     else if (control == 1 && newAngle) // Brushless Serial Control
     {
       Serial.println("Brushless Sensor Func");
       newAngle = false;
+      DC_pos_control();
     }
 
   }
