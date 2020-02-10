@@ -28,18 +28,18 @@ ser.stopbits = serial.STOPBITS_ONE #number of stop bits
 ser.xonxoff = False    #disable software flow control
 
 
-def receive_msg():
-    # while page_bool[indx]:
-    global sensor_reading
-    global motor_reading
-    # print(sensor_reading)
-    reading = ser.read(4)
-    reading= reading.decode('ASCII')
-    if reading[0] == 'z':
-        motor_reading = reading[1:]
-    elif reading[0] == 's':
-        sensor_reading = reading[1:]
-    return 
+# def receive_msg():
+#     # while page_bool[indx]:
+#     global sensor_reading
+#     global motor_reading
+#     # print(sensor_reading)
+#     reading = ser.read(4)
+#     reading= reading.decode('ASCII')
+#     if reading[0] == 'z':
+#         motor_reading = reading[1:]
+#     elif reading[0] == 's':
+#         sensor_reading = reading[1:]
+#     return 
 
 def send_command_threading(msg):
     t3 = threading.Thread(target=send_command, args=[msg])
@@ -243,9 +243,9 @@ class motor_page(object):
         self.height=height
         self.button_width=150
         self.button_height=50
-        self.motor_angle=''
-        # self.sensor_reading = ''
-        self.user_command=''
+        self.motor_reading='0'
+        self.sensor_reading = '0'
+        self.user_command='0'
         self.label_box=False
         self.lengnth_box=False
         self.is_inspecting=False
@@ -267,6 +267,15 @@ class motor_page(object):
     #         sensor_reading= sensor_reading.decode('ASCII')
     #         sensor_reading = sensor_reading[1:]
     #     return 
+
+    def receive_msg(self):
+        reading = ser.read(4)
+        reading= reading.decode('ASCII')
+        if reading[0] == 'z':
+            self.motor_reading = reading[1:]
+        elif reading[0] == 's':
+            self.sensor_reading = reading[1:]
+        return 
 
     def draw_page(self,canvas):
         # t3=threading.Thread(target=self.receive_msg)
@@ -338,11 +347,11 @@ class motor_page(object):
     def draw_massage(self,canvas):
         canvas.create_rectangle(20,self.height-90,600,self.height-20,fill="white",width=0)
         canvas.create_text(80,self.height-80,fill="darkblue",font="Times 10 italic bold",text="Sensor Reading:")
-        canvas.create_text(80,self.height-30,fill="black",font="Times 10 italic bold",text=sensor_reading)
+        canvas.create_text(80,self.height-30,fill="black",font="Times 10 italic bold",text=self.sensor_reading)
 
         canvas.create_rectangle(20,self.height-200,600,self.height-130,fill="white",width=0)
         canvas.create_text(80,self.height-190,fill="darkblue",font="Times 10 italic bold",text="Motor Angle:")
-        canvas.create_text(80,self.height-180,fill="black",font="Times 10 italic bold",text=motor_reading)
+        canvas.create_text(80,self.height-180,fill="black",font="Times 10 italic bold",text=self.motor_reading)
 
 
 
@@ -401,8 +410,9 @@ class motor_page(object):
 
         #Retrieve Command Button
         if 800+button_width<=x<=800+2*button_width and 400<=y<=400+button_height:
+            print('here')
             # self.abort=True
-            # receive_msg()
+            self.receive_msg()
             pass
 
 
