@@ -21,6 +21,7 @@ int control = 0;
 int prev_motor = 0;
 int motor = 0;
 int sensor_reading;
+int motor_reading;
 bool newAngle = false;
 
 // IR Sensor Variables
@@ -73,6 +74,7 @@ void loop()
       servoSerial();
       newAngle = false;
     }
+    report_motor();
   }
   
   else if(motor == 2) // Stepper Motor Functions
@@ -86,6 +88,7 @@ void loop()
       serialStepper();
       newAngle = false;
     }
+    report_motor();
   }
 
   else if(motor == 3) // DC Brushless Motor Functions
@@ -96,7 +99,7 @@ void loop()
       Serial.println("Brushless Sensor Func");
       newAngle = false;
     }
-
+  report_motor();
   }
 }
 
@@ -114,11 +117,13 @@ void loop()
     Ultrainches = (Ultrasensor + bias) / scale;
     sensor_reading = Ultrainches; 
     //Serial.println(inches,DEC);
+    int delayval = Ultrainches / 10;
+    motor_reading = delayval;
     delay(1);
     digitalWrite(stepperPinB, HIGH);
-    delay(Ultrainches / 10);
+    delay(delayval);
     digitalWrite(stepperPinB, LOW);
-    delay(Ultrainches / 10);
+    delay(delayval);
   }
 
 void serialStepper()
@@ -150,7 +155,7 @@ void serialStepper()
     digitalWrite(stepperPinB, LOW);
     delay(1);
     StepCounter = StepCounter + 1;
-  
+    motor_reading = StepCounter;
     if (StepCounter == m)
     {
       StepCounter = 0;
@@ -165,6 +170,7 @@ void serialStepper()
   { 
     myservo.write(angle);
     newAngle = false;
+    motor_reading = angle;
   }
 
   void servoIR()
@@ -172,7 +178,7 @@ void serialStepper()
     float IRdist =  averageFilter();
     sensor_reading = IRdist;
     int new_pos = setServo(int(IRdist));
-
+    motor_reading = new_pos;
     myservo.write(new_pos);
   }
 
@@ -270,7 +276,10 @@ void parseInput()
   }
 }
 
-
+void report_motor(){
+  Serial.print('z');
+  Serial.println(motor_reading);
+}
 
 
 void report_state(){
