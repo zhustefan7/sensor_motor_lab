@@ -16,6 +16,7 @@ import shutil,sys
 
 EmptyGray = "gray30"
 sensor_reading = '0'
+motor_reading = '0'
 page_bool = [True, False, False, False]
 upper_dir="software_test/"  # the upper most directory under which the result of each session is stored in current path, which will be initialized later
 now = datetime.datetime.now()   #for getting current time 
@@ -27,13 +28,17 @@ ser.stopbits = serial.STOPBITS_ONE #number of stop bits
 ser.xonxoff = False    #disable software flow control
 
 
-def receive_msg(page_bool, indx):
-    while page_bool[indx]:
-        global sensor_reading
-        print(sensor_reading)
-        sensor_reading = ser.readline()
-        sensor_reading= sensor_reading.decode('ASCII')
-        sensor_reading = sensor_reading[1:]
+def receive_msg():
+    # while page_bool[indx]:
+    global sensor_reading
+    global motor_reading
+    # print(sensor_reading)
+    reading = ser.read(4)
+    reading= reading.decode('ASCII')
+    if reading[0] == 'z':
+        motor_reading = reading[1:]
+    elif reading[0] == 's':
+        sensor_reading = reading[1:]
     return 
 
 def send_command_threading(msg):
@@ -111,15 +116,15 @@ class App(object):
 
         # init and get timerFired running
         #self.__init__()
-        # t1=threading.Thread(target=timerFiredWrapper)
-        # t1.start()
+        t1=threading.Thread(target=timerFiredWrapper)
+        t1.start()
         # t2 = threading.Thread(target=receive_msg)
         # t2.start()
         # and launch the app
         # timerFiredWrapper()
         root.mainloop()
-        # t1.join()
-        timerFiredWrapper()
+        t1.join()
+        # timerFiredWrapper()
         # t2.join()
         ser.close()  #Close the serial port when the software is closed
         print("Bye")
@@ -317,6 +322,17 @@ class motor_page(object):
                                 fill="khaki", width=1)
         canvas.create_text(self.width-50,self.height-25,fill="darkblue",font="Times 10 italic bold",text="Back")
 
+      
+      
+        #retrieve Button 
+        text = "Get State"
+
+        canvas.create_rectangle(800+button_width ,400, 800+2*button_width,400+button_height,
+                                fill="purple", width=1)
+        canvas.create_text(800+button_width*1.5, 400+button_height/2,fill="darkblue",font="Times 10 italic bold",text=text)
+
+
+
 
 
     def draw_massage(self,canvas):
@@ -326,7 +342,7 @@ class motor_page(object):
 
         canvas.create_rectangle(20,self.height-200,600,self.height-130,fill="white",width=0)
         canvas.create_text(80,self.height-190,fill="darkblue",font="Times 10 italic bold",text="Motor Angle:")
-        canvas.create_text(80,self.height-180,fill="black",font="Times 10 italic bold",text=self.motor_angle)
+        canvas.create_text(80,self.height-180,fill="black",font="Times 10 italic bold",text=motor_reading)
 
 
 
@@ -335,6 +351,7 @@ class motor_page(object):
         y = event.y
         button_width=self.button_width
         button_height=self.button_height
+        global page_bool
 
         #Sensor Control Mode
         if 800<=x<=800+button_width and 200<=y<=200+button_height:
@@ -352,6 +369,10 @@ class motor_page(object):
             # send_command(msg)  
             send_command_threading(msg)
             print(self.control_modes)
+            # t2=threading.Thread(target=receive_msg, args = [page_bool,1])
+            # t2.start()
+            # sys.stdout.flush()
+            # t2.join()
 
 
         #Send Command Button
@@ -365,9 +386,10 @@ class motor_page(object):
                 send_command_threading(msg)
                 print('sent msg%s'%msg)
 
+
+
         #Back Button
         if self.width-100<=x<=self.width and self.height-50<=y<=self.height:
-            global page_bool
             page_bool[0]=True
             page_bool = [True, False, False, False]
             self.control_modes = [True,False] 
@@ -375,6 +397,15 @@ class motor_page(object):
             # send_command(msg)
             send_command_threading(msg)
             print('front page')
+
+
+        #Retrieve Command Button
+        if 800+button_width<=x<=800+2*button_width and 400<=y<=400+button_height:
+            # self.abort=True
+            # receive_msg()
+            pass
+
+
 
 
         #User command Input Box
@@ -420,16 +451,16 @@ class motor_page(object):
 
 if __name__ == '__main__':
     blade_inspector=Interface()
-    # blade_inspector.run()
+    blade_inspector.run()
 
 
-    t1=threading.Thread(target=blade_inspector.run)
-    t1.start()
+    # t1=threading.Thread(target=blade_inspector.run)
+    # t1.start()
     
 
 
-    t2=threading.Thread(target=receive_msg, args = [page_bool,1])
-    t2.start()
+    # t2=threading.Thread(target=receive_msg, args = [page_bool,1])
+    # t2.start()    
 
-    t1.join()
-    t2.join()
+    # t1.join()
+    # t2.join()
