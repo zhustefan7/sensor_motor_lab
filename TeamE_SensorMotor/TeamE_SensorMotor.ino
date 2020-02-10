@@ -26,6 +26,7 @@ int control = 0;
 int prev_motor = 0;
 int motor = 0;
 int sensor_reading;
+int motor_reading;
 bool newAngle = false;
 
 // IR Sensor Variables
@@ -97,8 +98,8 @@ void loop()
 //  Serial.println(motor);
 //  Serial.print("control:");
 //  Serial.println(control);
-//  Serial.println("angle:");
-//  Serial.print(angle);
+//  Serial.print("angle:");
+//  Serial.println(angle);
 
 
   parseInput();
@@ -106,8 +107,8 @@ void loop()
   if(motor == 1) // Servo Motor Functions
   {
     if (control == 0){
-      report_state();
       servoIR();   //Servo Sensor Control
+      report_state();
       } 
     else if (control == 1 && newAngle) // Servo Serial Control
     {
@@ -115,19 +116,21 @@ void loop()
       servoSerial();
       newAngle = false;
     }
+    report_motor();
   }
   
   else if(motor == 2) // Stepper Motor Functions
   {
-    if (control == 0) {
-      servoIR();   
+    if (control == 0) { 
       ultrastepper();
+      report_state();
       } // Stepper Sensor Control
     else if (control == 1 && newAngle)  // Stepper Serial Control
     {
       serialStepper();
       newAngle = false;
     }
+    report_motor();
   }
 
   else if(motor == 3) // DC Brushless Motor Functions
@@ -143,7 +146,7 @@ void loop()
       newAngle = false;
       DC_pos_control();
     }
-
+  report_motor();
   }
 }
 
@@ -152,17 +155,22 @@ void loop()
   void ultrastepper()
   {
     int Ultrasensor, Ultrainches;
+    float scale = 2;
+    float bias = 0;
 
     // read the analog output of the EZ1 from analog input 0
     Ultrasensor = analogRead(ultraPin);
-    Ultrainches = Ultrasensor / 2;
+//    Serial.println(Ultrasensor,DEC);
+    Ultrainches = (Ultrasensor + bias) / scale;
     sensor_reading = Ultrainches; 
     //Serial.println(inches,DEC);
+    int delayval = Ultrainches / 10;
+    motor_reading = delayval;
     delay(1);
     digitalWrite(stepperPinB, HIGH);
-    delay(Ultrainches / 10);
+    delay(delayval);
     digitalWrite(stepperPinB, LOW);
-    delay(Ultrainches / 10);
+    delay(delayval);
   }
 
 void serialStepper()
@@ -175,14 +183,14 @@ void serialStepper()
     if (n >= 0 && n <= 360)
     { //forward
       m = n * 4.444;
-      Serial.println(m);
+//      Serial.println(m);
       digitalWrite(stepperPinA, LOW);
       Stepping = true;
     }
     else
     { //reverse
       m = -n * 4.444;
-      Serial.println(m);
+//      Serial.println(m);
       digitalWrite(stepperPinA, HIGH);
       Stepping = true;
     }
@@ -194,7 +202,7 @@ void serialStepper()
     digitalWrite(stepperPinB, LOW);
     delay(1);
     StepCounter = StepCounter + 1;
-  
+    motor_reading = StepCounter;
     if (StepCounter == m)
     {
       StepCounter = 0;
@@ -209,13 +217,15 @@ void serialStepper()
   { 
     myservo.write(angle);
     newAngle = false;
+    motor_reading = angle;
   }
 
   void servoIR()
   {
-    int IRdist =  averageFilter();
-    int new_pos = setServo(IRdist);
+    float IRdist =  averageFilter();
     sensor_reading = IRdist;
+    int new_pos = setServo(int(IRdist));
+    motor_reading = new_pos;
     myservo.write(new_pos);
   }
 
@@ -223,7 +233,6 @@ void serialStepper()
   float getIRdist()
   {
     int IRdist = analogRead(IRpin);       // reads the value of the sharp sensor
-    //  Serial.println(val);
     IRdist = (IRdist - 239.46) / 65.961;
     if (IRdist < -1) IRdist = 5;
     if (IRdist > IRhigh) IRdist = IRhigh;
@@ -242,8 +251,7 @@ void serialStepper()
       distance_filtered += getIRdist();
     }
     delay(50);
-    distance_filtered /= (num_points);
-
+    distance_filtered /= float(num_points);
     return distance_filtered;
   }
 
@@ -290,9 +298,8 @@ void parseInput()
     //Serial.println(serialIn);
   char inChar = serialIn.charAt(0);
   serialIn.remove(0,1);
-    
     // Check if remaining is a number
-    if(serialIn.toInt()|| serialIn=="000")
+    if(serialIn.toInt() || (serialIn[0]=='0'&& serialIn[2]=='0'&& serialIn[1]=='0'))
     {
       // Convert String
       int newVal = serialIn.toInt();
@@ -316,7 +323,10 @@ void parseInput()
   }
 }
 
-
+void report_motor(){
+  Serial.print('z');
+  Serial.println(motor_reading);
+}
 
 
 void report_state(){

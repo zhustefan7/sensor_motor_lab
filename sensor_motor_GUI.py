@@ -55,7 +55,7 @@ ser.xonxoff = False    #disable software flow control
 
 
 def send_command_threading(msg):
-    t2 = threading.Thread(target=send_command, args=(msg))
+    t2 = threading.Thread(target=send_command, args=[msg])
     t2.start()
     t2.join()
      
@@ -132,6 +132,7 @@ class App(object):
         # t1.join()
         # and launch the app
         root.mainloop()
+        t1.join()
         ser.close()  #Close the serial port when the software is closed
         print("Bye")
 
@@ -181,7 +182,9 @@ class Frontpage(object):
         self.b1_loc = [self.w/2-120, self.h/2-200, self.w/2+180, self.h/2-110]
         self.b2_loc = [self.w/2-120, self.h/2-90, self.w/2+180, self.h/2]
         self.b3_loc = [self.w/2-120, self.h/2+20, self.w/2+180, self.h/2+110]
-        send_command('m%03d'%0)
+        msg = 'm%03d'%0
+        # send_command(msg)
+        send_command_threading(msg)
         pass
 
     def draw_button(self,canvas):
@@ -260,6 +263,9 @@ class motor_page(object):
         return 
 
     def draw_page(self,canvas):
+        # t3=threading.Thread(target=self.receive_msg)
+        # t3.start()
+        # t3.join()
         # self.receive_msg()
         self.draw_button(canvas)
         self.draw_massage(canvas)
@@ -354,7 +360,8 @@ class motor_page(object):
             self.abort=True
             if self.control_modes[1]:
                 msg = 'a%03d'% int(self.user_command)
-                send_command(msg)
+                # send_command(msg)
+                send_command_threading(msg)
                 print('sent msg%s'%msg)
 
         #Back Button
@@ -364,7 +371,8 @@ class motor_page(object):
             page_bool = [True, False, False, False]
             self.control_modes = [True,False] 
             msg = 'm%03d'%0
-            send_command(msg)
+            # send_command(msg)
+            send_command_threading(msg)
             print('front page')
 
 
