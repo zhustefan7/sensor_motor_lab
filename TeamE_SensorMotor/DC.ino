@@ -19,10 +19,10 @@ void DC_vel_control(){
   Motor_PID.SetTunings(Kp, Ki, Kd);
   Motor_PID.Compute();
   PWMdrive(PWMvalue, 20);
+  motor_reading = int(PWMvalue);
 
-  Serial.print(grad); //grad
-  Serial.print("\t");
-  Serial.println(PWMvalue);
+  //Serial.print("Velocity: \t");
+  //Serial.println(motor_reading);
 }
 
 void DC_pos_control(){
@@ -44,10 +44,9 @@ void DC_pos_control(){
   Motor_PID.SetTunings(Kp, Ki, Kd);
   Motor_PID.Compute();
   PWMdrive(PWMvalue, 40);
-
-  Serial.print(count); //grad
-  Serial.print("\t");
-  Serial.println(PWMvalue);
+  motor_reading = int(count * resolution / 360.0);
+  //Serial.print("Position (degrees): \t");
+  //Serial.println(motor_reading); //grad
 }
 
 
