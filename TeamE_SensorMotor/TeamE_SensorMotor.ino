@@ -65,6 +65,11 @@ double PWMvalue = 0;  //Computed PWM requirement
 double Kp, Ki, Kd;
 PID Motor_PID(&Feed, &PWMvalue, &Set, 0, 0, 0, DIRECT);
 
+// Timer Stuff
+int motor_timer = 0;
+int sensor_timer = 0;
+int timer_threshold = 500;
+
 
 void setup()
 {
@@ -102,6 +107,9 @@ void loop()
 //  Serial.println(control);
 //  Serial.print("angle:");
 //  Serial.println(angle);
+
+motor_timer += 1;
+sensor_timer += 1;
 
 
   parseInput();
@@ -324,12 +332,15 @@ void parseInput()
   if (Serial.available() > 0) serialIn = Serial.readString();
   
   // Check if full input is received
-  if (serialIn.length() == 4)
+  if (serialIn.length() == 6)
   {
     // Extract first char from input
-    //Serial.println(serialIn);
   char inChar = serialIn.charAt(0);
   serialIn.remove(0,1);
+
+  char inChar1 = serialIn.charAt(0);
+  serialIn.remove(0,1);
+  
     // Check if remaining is a number
     if(serialIn.toInt() || (serialIn[0]=='0'&& serialIn[2]=='0'&& serialIn[1]=='0'))
     {
@@ -337,7 +348,7 @@ void parseInput()
       int newVal = serialIn.toInt();
       
       // Update State
-      if(inChar == 'm'){
+      if(inChar == 'm' && inChar1 =='m'){
         prev_motor = motor;
         motor = newVal;
         if (newVal !=  prev_motor){
@@ -345,10 +356,15 @@ void parseInput()
         }
        }
        
-      else if(inChar == 'c') control = newVal;
-      else if(inChar == 'a') 
+      else if(inChar == 'c'&& inChar1 =='c') control = newVal;
+      else if(inChar == 'a'&& inChar1 =='a') 
       {
         newAngle = true;
+        angle = newVal;
+      }
+      else if(inChar == 'a'&& inChar1 =='v') 
+      {
+        control = 2;
         angle = newVal;
       }
    }
@@ -356,12 +372,20 @@ void parseInput()
 }
 
 void report_motor(){
-  Serial.print('z');
-  Serial.println(motor_reading);
+  if(motor_timer > timer_threshold)
+  {
+    Serial.print('z');
+    Serial.println(motor_reading);
+    motor_timer = 0;
+  }
 }
 
 
 void report_state(){
-  Serial.print('s');
-  Serial.println(sensor_reading);
+  if(sensor_timer > timer_threshold)
+  {
+    Serial.print('s');
+    Serial.println(sensor_reading);
+    sensor_timer = 0;
+  }
 }
