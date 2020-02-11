@@ -4,15 +4,15 @@ Servo myservo;  // create servo object to control a servo
 
 // Pin Definitions
 const int IRpin = 1;                 // IR goes to Board A1
-const int IRbuttonPin = 2;          // IR button goes to Digital 2
+const int IRbuttonPin = 11;          // IR button goes to Digital 2
 const int servoPin = 10;             // Servo pin goes to Digital 10
 const int stepperPinA = 8;
 const int stepperPinB = 9;
 const int ultraPin = 0;
 
-#define POT A1
-#define encoder0PinA  3
-#define encoder0PinB  4
+#define POT A2
+#define encoder0PinA  2
+#define encoder0PinB  3
 #define CW 5
 #define CCW 6
 
@@ -28,6 +28,7 @@ int motor = 0;
 int sensor_reading;
 int motor_reading;
 bool newAngle = false;
+int last_control = 0;
 
 // IR Sensor Variables
 int val = 0;                 // variable to store the values from sensor(initially zero)
@@ -44,11 +45,11 @@ int Stepping = false;
 int encoder0PinALast = LOW;
 int n = LOW;
 
-int resolution = 322;
+int resolution = 360; //322;
 int count = 0;
 
 // Pot variables
-float pot_gain = 100;
+float pot_gain = 25;
 float grad;
 
 // PID variables
@@ -135,17 +136,38 @@ void loop()
 
   else if(motor == 3) // DC Brushless Motor Functions
   {
+    if (control != last_control){ // control mode transition
+      for (int i = 0; i < 10; i++){
+        PWMdrive(0, 0);
+        //Serial.println("DC Reset");
+      }
+      Set = 0;
+      count = 0;
+      motor_reading = 0;
+    }
+    
     if (control == 0) {
-      Serial.println("Brushless Sensor Func"); // Brushless Sensor Control
+      //Serial.println("Brushless Sensor Func"); // Brushless Sensor Control
       DC_vel_control();
+      report_state();
     
     }
     else if (control == 1 && newAngle) // Brushless Serial Control
     {
-      Serial.println("Brushless Sensor Func");
+      //Serial.println("Brushless Sensor Func");
       newAngle = false;
-      DC_pos_control();
+      Set = angle * (360.0 / resolution);
+      while(count <= Set){
+        DC_pos_control();
+      }
+      
+      PWMdrive(0, 0); //stop motor after reaching target position
+      delay(10);     //wait until motor stops
+      Set = 0;    
+      count = 0;      //reset target and encoder count
     }
+    last_control = control;
+    
   report_motor();
   }
 }

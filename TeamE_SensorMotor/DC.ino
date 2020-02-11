@@ -9,16 +9,17 @@ void DC_vel_control(){
   // 3. PID settings
   sensor_reading = analogRead(POT); // 8~400
   grad = sensor_reading / pot_gain;
+  //Serial.println(grad);
   Set += grad;
   Feed = count;
 
   // 4. Compute PID
-  Kp = 0.1, Ki = 0, Kd = 0.01; //Kp 0.05
+  Kp = 0.12, Ki = 0, Kd = 0.01; //Kp 0.1
   PWMmax = 100;
   Motor_PID.SetOutputLimits(-PWMmax, PWMmax);
   Motor_PID.SetTunings(Kp, Ki, Kd);
   Motor_PID.Compute();
-  PWMdrive(PWMvalue, 20);
+  PWMdrive(PWMvalue, 20); //20
   motor_reading = int(PWMvalue);
 
   //Serial.print("Velocity: \t");
@@ -34,7 +35,6 @@ void DC_pos_control(){
   timestamp = micros();
 
   // 3. PID settings
-  Set = angle * 360.0 / resolution;
   Feed = count;
 
   // 4. Compute PID
@@ -43,8 +43,8 @@ void DC_pos_control(){
   Motor_PID.SetOutputLimits(-PWMmax, PWMmax);
   Motor_PID.SetTunings(Kp, Ki, Kd);
   Motor_PID.Compute();
-  PWMdrive(PWMvalue, 40);
-  motor_reading = int(count * resolution / 360.0);
+  PWMdrive(PWMvalue, 50);
+  motor_reading = count * (resolution / 360.0);
   //Serial.print("Position (degrees): \t");
   //Serial.println(motor_reading); //grad
 }
