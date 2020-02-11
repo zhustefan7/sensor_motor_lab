@@ -5,7 +5,6 @@ import argparse
 import numpy as np
 import time
 import datetime
-# from PIL import ImageTk,Image 
 import serial
 import threading
 import shutil,sys
@@ -18,7 +17,7 @@ upper_dir="software_test/"  # the upper most directory under which the result of
 now = datetime.datetime.now()   #for getting current time 
 
 # Setting Up Serial Port 
-ser = serial.Serial('/dev/ttyACM0',9600, writeTimeout=0, parity=serial.PARITY_NONE, rtscts=False,dsrdtr=False)
+ser = serial.Serial('/dev/ttyACM0',9600, writeTimeout=0, parity=serial.PARITY_NONE, rtscts=False,dsrdtr=True)
 ser.bytesize=serial.EIGHTBITS
 ser.stopbits = serial.STOPBITS_ONE #number of stop bits
 ser.xonxoff = False    #disable software flow control
@@ -43,7 +42,10 @@ def send_command_threading(msg):
     t3.join()
      
 def send_command(msg):
+    # if not ser.isOpen():
+    #     ser.open()
     ser.write((msg).encode("ascii"))
+    # ser.close()
     return 
 
 
@@ -169,7 +171,7 @@ class Frontpage(object):
         self.b1_loc = [self.w/2-120, self.h/2-200, self.w/2+180, self.h/2-110]
         self.b2_loc = [self.w/2-120, self.h/2-90, self.w/2+180, self.h/2]
         self.b3_loc = [self.w/2-120, self.h/2+20, self.w/2+180, self.h/2+110]
-        msg = 'm%03d'%0
+        msg = 'mm%04d'%0
         # send_command(msg)
         send_command_threading(msg)
         pass
@@ -201,17 +203,17 @@ class Frontpage(object):
 
         if self.b1_loc[0]<=x<=self.b1_loc[2] and self.b1_loc[1]<=y<=self.b1_loc[3]:
             page_bool = [False, True, False, False]
-            motor_msg = 'm%03d'%1
+            motor_msg = 'mm%04d'%1
             print('motor mode: Servo')
             
         elif self.b2_loc[0]<=x<=self.b2_loc[2] and self.b2_loc[1]<=y<=self.b2_loc[3]:
             page_bool = [False, False, True, False]
-            motor_msg = 'm%03d'%2
+            motor_msg = 'mm%04d'%2
             print('motor mode: Stepper')
             
         elif self.b3_loc[0]<=x<=self.b3_loc[2] and self.b3_loc[1]<=y<=self.b3_loc[3]:
             page_bool = [False, False, False, True]
-            motor_msg = 'm%03d'%3
+            motor_msg = 'mm%04d'%3
             print('motor mode: DC brushless')
         
         # control_msg ='c%03d'%1
@@ -328,10 +330,11 @@ class motor_page(object):
         canvas.create_text(80,self.height-30,fill="black",font="Times 10 italic bold",text=self.sensor_reading)
 
         canvas.create_rectangle(20,self.height-200,600,self.height-130,fill="white",width=0)
-        canvas.create_text(80,self.height-190,fill="darkblue",font="Times 10 italic bold",text="Motor Angle:")
+        canvas.create_text(80,self.height-190,fill="darkblue",font="Times 10 italic bold",text="Motor State:")
         canvas.create_text(80,self.height-180,fill="black",font="Times 10 italic bold",text=self.motor_reading)
 
-
+        sys.stdout.flush()
+        self.receive_msg()
 
     def mousePressed(self,event):
         x = event.x
@@ -344,7 +347,7 @@ class motor_page(object):
         if 800<=x<=800+button_width and 200<=y<=200+button_height:
             self.control_modes[1] = False
             self.control_modes[0]= True
-            msg = 'c%03d'%0
+            msg = 'cc%04d'%0
             send_command(msg)        
             print(self.control_modes)
 
@@ -352,27 +355,21 @@ class motor_page(object):
         if 800+button_width<=x<=800+2*button_width and 200<=y<=200+button_height:
             self.control_modes[1] = True
             self.control_modes[0]= False
-            msg = 'c%03d'%1
+            msg = 'cc%04d'%1
             # send_command(msg)  
             send_command_threading(msg)
             print(self.control_modes)
-            # t2=threading.Thread(target=receive_msg, args = [page_bool,1])
-            # t2.start()
-            # sys.stdout.flush()
-            # t2.join()
 
 
         #Send Command Button
         if 800+button_width<=x<=800+2*button_width and 100<=y<=100+button_height:
-            # self.hover_list[3]=True
-            # self.hover_list[2]=False
             self.abort=True
             if self.control_modes[1]:
-                msg = 'a%03d'% int(self.user_command)
+                msg = 'a%04s'% self.user_command
                 # send_command(msg)
                 send_command_threading(msg)
                 print('sent msg%s'%msg)
-
+    
 
 
         #Back Button
@@ -380,7 +377,7 @@ class motor_page(object):
             page_bool[0]=True
             page_bool = [True, False, False, False]
             self.control_modes = [True,False] 
-            msg = 'm%03d'%0
+            msg = 'mm%04d'%0
             send_command_threading(msg)
             print('front page')
 
@@ -388,12 +385,11 @@ class motor_page(object):
         #Retrieve Command Button
         if 800+button_width<=x<=800+2*button_width and 400<=y<=400+button_height:
             print('here')
-            # self.abort=True
-            sys.stdout.flush()
-            
-            t2=threading.Thread(target=self.receive_msg)
-            t2.start()    
+            # sys.stdout.flush()
+            # t2=threading.Thread(target=self.receive_msg)
+            # t2.start()    
             # self.receive_msg()
+            # ser.close()
             pass
 
 
