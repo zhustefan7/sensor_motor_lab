@@ -49,7 +49,8 @@ int resolution = 360; //322;
 int count = 0;
 
 // Pot variables
-float pot_gain = 25;
+float pot_gain = 50;
+float vcmd_gain = 20;
 float grad;
 
 // PID variables
@@ -152,11 +153,14 @@ sensor_timer += 1;
       Set = 0;
       count = 0;
       motor_reading = 0;
+      grad = 0;
+      angle = 0;
     }
     
-    if (control == 0) {
+    if (control == 0) { //velocity
       //Serial.println("Brushless Sensor Func"); // Brushless Sensor Control
-      DC_vel_control();
+      // Control by serial command
+      DC_vel_control(false);
       report_state();
     
     }
@@ -173,6 +177,12 @@ sensor_timer += 1;
       delay(10);     //wait until motor stops
       Set = 0;    
       count = 0;      //reset target and encoder count
+    }
+
+    else if (control == 2) // Brushless Serial Control
+    {
+      grad = angle / vcmd_gain;
+      DC_vel_control(true);
     }
     last_control = control;
     

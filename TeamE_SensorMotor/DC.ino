@@ -1,4 +1,4 @@
-void DC_vel_control(){
+void DC_vel_control(bool vcmd){
   // sensor = 0, Sensor controls velocity
   // 1. Get encoder readings: interrupt
 
@@ -7,20 +7,30 @@ void DC_vel_control(){
   timestamp = micros();
 
   // 3. PID settings
-  sensor_reading = analogRead(POT); // 8~400
-  grad = sensor_reading / pot_gain;
+  if (vcmd == false){
+    sensor_reading = analogRead(POT); // 8~400
+    grad = sensor_reading / pot_gain;
+  }
+  
   //Serial.println(grad);
   Set += grad;
   Feed = count;
 
   // 4. Compute PID
-  Kp = 0.12, Ki = 0, Kd = 0.01; //Kp 0.1
-  PWMmax = 100;
+  Kp = 0.2, Ki = 0, Kd = 0.01; //Kp 0.12
+  PWMmax = 150;
   Motor_PID.SetOutputLimits(-PWMmax, PWMmax);
   Motor_PID.SetTunings(Kp, Ki, Kd);
   Motor_PID.Compute();
   PWMdrive(PWMvalue, 20); //20
-  motor_reading = int(PWMvalue);
+
+  if (vcmd == true){
+    motor_reading = int(angle);
+  }
+  else{
+    motor_reading = int(PWMvalue);
+  }
+  
 
   //Serial.print("Velocity: \t");
   //Serial.println(motor_reading);
