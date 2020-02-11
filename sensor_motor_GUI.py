@@ -1,27 +1,18 @@
 import random
 from tkinter import *
 import os 
-# from xls_write import xls_write
 import argparse
-# import imutils
-# import cv2 as cv
-# import PySpin
 import numpy as np
-# import matplotlib
-# import xlwt
-# from matplotlib import pyplot as plt
-# from Acquisition_Stefan import*
 import time
 import datetime
-# from cv_analysis import Analysis
-# from main import*
 # from PIL import ImageTk,Image 
 import serial
 import threading
 import shutil,sys
 
 EmptyGray = "gray30"
-# page_bool=[True,False]
+sensor_reading = '0'
+motor_reading = '0'
 page_bool = [True, False, False, False]
 upper_dir="software_test/"  # the upper most directory under which the result of each session is stored in current path, which will be initialized later
 now = datetime.datetime.now()   #for getting current time 
@@ -33,34 +24,27 @@ ser.stopbits = serial.STOPBITS_ONE #number of stop bits
 ser.xonxoff = False    #disable software flow control
 
 
-# def motor_control(position):  #place holder      
-#     position=str(position)
-#     position_command=("P=%s"+"\r\n")%position
-#     if not ser.isOpen():
-#         ser.open()
-#     ser.write(('UDI'+'\r\n').encode("ascii"))
-#     ser.write(('UCI'+'\r\n').encode("ascii"))
-#     ser.write(('AMPS=1023'+'\r\n').encode("ascii"))
-#     ser.write(("MP"+"\r\n").encode("ascii"))
-#     ser.write(("ZS"+"\r\n").encode("ascii"))
-#     ser.write(("A=10000"+"\r\n").encode("ascii"))
-#     ser.write(("V=400000"+"\r\n").encode("ascii"))
-#     ser.write(position_command.encode("ascii"))
-#     ser.write(("G"+"\r\n").encode("ascii"))
-#     ser.write(("WHILE Bt"+"\r\n").encode("ascii"))
-#     ser.write(("LOOP"+"\r\n").encode("ascii"))
-#     ser.write(("BRKENG"+"\r\n").encode("ascii"))
-#     ser.write(("END"+"\r\n").encode("ascii"))
-
-
+# def receive_msg():
+#     # while page_bool[indx]:
+#     global sensor_reading
+#     global motor_reading
+#     # print(sensor_reading)
+#     reading = ser.read(4)
+#     reading= reading.decode('ASCII')
+#     if reading[0] == 'z':
+#         motor_reading = reading[1:]
+#     elif reading[0] == 's':
+#         sensor_reading = reading[1:]
+#     return 
 
 def send_command_threading(msg):
-    t2 = threading.Thread(target=send_command, args=[msg])
-    t2.start()
-    t2.join()
+    t3 = threading.Thread(target=send_command, args=[msg])
+    t3.start()
+    t3.join()
      
 def send_command(msg):
     ser.write((msg).encode("ascii"))
+    return 
 
 
 class App(object):
@@ -76,6 +60,7 @@ class App(object):
     def run(self, width=1100, height=600):
         # create the root and the canvas
         root = Tk()
+
         self.width = width
         self.height = height
         self.canvas = Canvas(root, width=width, height=height)
@@ -129,10 +114,14 @@ class App(object):
         #self.__init__()
         t1=threading.Thread(target=timerFiredWrapper)
         t1.start()
-        # t1.join()
+        # t2 = threading.Thread(target=receive_msg)
+        # t2.start()
         # and launch the app
+        # timerFiredWrapper()
         root.mainloop()
         t1.join()
+        # timerFiredWrapper()
+        # t2.join()
         ser.close()  #Close the serial port when the software is closed
         print("Bye")
 
@@ -153,10 +142,8 @@ class Interface(App):
 
     def draw_page(self,canvas):
         for i in range(len(self.page_list)):
-            # print(page_bool)
-            if page_bool[i]==True:
+            if page_bool[i]==True:  
                 self.page_list[i].draw_page(canvas)
-        # print(page_bool)
 
     def redrawAll(self):
         canvas = self.canvas
@@ -210,6 +197,8 @@ class Frontpage(object):
         x=event.x
         y=event.y
         global page_bool
+
+
         if self.b1_loc[0]<=x<=self.b1_loc[2] and self.b1_loc[1]<=y<=self.b1_loc[3]:
             page_bool = [False, True, False, False]
             motor_msg = 'm%03d'%1
@@ -227,7 +216,7 @@ class Frontpage(object):
         
         # control_msg ='c%03d'%1
         # send_command(control_msg)
-        send_command(motor_msg)
+        send_command_threading(motor_msg)
         return 
 
 
@@ -239,9 +228,9 @@ class motor_page(object):
         self.height=height
         self.button_width=150
         self.button_height=50
-        self.motor_angle=''
-        self.sensor_reading = ''
-        self.user_command=''
+        self.motor_reading='0'
+        self.sensor_reading = '0'
+        self.user_command='0'
         self.label_box=False
         self.lengnth_box=False
         self.is_inspecting=False
@@ -256,10 +245,14 @@ class motor_page(object):
         # self.t3.join()
         pass
 
+
     def receive_msg(self):
-        sensor_reading = ser.readline()
-        sensor_reading= sensor_reading.decode('ASCII')
-        self.sensor_reading = sensor_reading[1:]
+        reading = ser.read(4)
+        reading= reading.decode('ASCII')
+        if reading[0] == 'z':
+            self.motor_reading = reading[1:]
+        elif reading[0] == 's':
+            self.sensor_reading = reading[1:]
         return 
 
     def draw_page(self,canvas):
@@ -316,6 +309,17 @@ class motor_page(object):
                                 fill="khaki", width=1)
         canvas.create_text(self.width-50,self.height-25,fill="darkblue",font="Times 10 italic bold",text="Back")
 
+      
+      
+        #retrieve Button 
+        text = "Get State"
+
+        canvas.create_rectangle(800+button_width ,400, 800+2*button_width,400+button_height,
+                                fill="purple", width=1)
+        canvas.create_text(800+button_width*1.5, 400+button_height/2,fill="darkblue",font="Times 10 italic bold",text=text)
+
+
+
 
 
     def draw_massage(self,canvas):
@@ -325,7 +329,7 @@ class motor_page(object):
 
         canvas.create_rectangle(20,self.height-200,600,self.height-130,fill="white",width=0)
         canvas.create_text(80,self.height-190,fill="darkblue",font="Times 10 italic bold",text="Motor Angle:")
-        canvas.create_text(80,self.height-180,fill="black",font="Times 10 italic bold",text=self.motor_angle)
+        canvas.create_text(80,self.height-180,fill="black",font="Times 10 italic bold",text=self.motor_reading)
 
 
 
@@ -334,6 +338,7 @@ class motor_page(object):
         y = event.y
         button_width=self.button_width
         button_height=self.button_height
+        global page_bool
 
         #Sensor Control Mode
         if 800<=x<=800+button_width and 200<=y<=200+button_height:
@@ -351,6 +356,10 @@ class motor_page(object):
             # send_command(msg)  
             send_command_threading(msg)
             print(self.control_modes)
+            # t2=threading.Thread(target=receive_msg, args = [page_bool,1])
+            # t2.start()
+            # sys.stdout.flush()
+            # t2.join()
 
 
         #Send Command Button
@@ -364,16 +373,28 @@ class motor_page(object):
                 send_command_threading(msg)
                 print('sent msg%s'%msg)
 
+
+
         #Back Button
         if self.width-100<=x<=self.width and self.height-50<=y<=self.height:
-            global page_bool
             page_bool[0]=True
             page_bool = [True, False, False, False]
             self.control_modes = [True,False] 
             msg = 'm%03d'%0
-            # send_command(msg)
             send_command_threading(msg)
             print('front page')
+
+
+        #Retrieve Command Button
+        if 800+button_width<=x<=800+2*button_width and 400<=y<=400+button_height:
+            print('here')
+            # self.abort=True
+            sys.stdout.flush()
+            
+            t2=threading.Thread(target=self.receive_msg)
+            t2.start()    
+            # self.receive_msg()
+            pass
 
 
         #User command Input Box
@@ -408,15 +429,22 @@ class motor_page(object):
         if self.label_box:
             canvas.create_line(1100-250+len(self.user_command)*7,50,1100-250+len(self.user_command)*7,80,fill='darkblue')     # this is the cursor
     
-    
-
-
-
-
 
 
         # super().draw_page(canvas)
 
+if __name__ == '__main__':
+    blade_inspector=Interface()
+    blade_inspector.run()
 
-blade_inspector=Interface()
-blade_inspector.run()
+
+    # t1=threading.Thread(target=blade_inspector.run)
+    # t1.start()
+    
+
+
+    # t2=threading.Thread(target=receive_msg, args = [page_bool,1])
+    # t2.start()    
+
+    # t1.join()
+    # t2.join()
