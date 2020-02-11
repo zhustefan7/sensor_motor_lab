@@ -108,8 +108,8 @@ void loop()
 //  Serial.print("angle:");
 //  Serial.println(angle);
 
-motor_timer += 1;
-sensor_timer += 1;
+//motor_timer += 1;
+//sensor_timer += 1;
 
 
   parseInput();
@@ -374,20 +374,20 @@ void parseInput()
 }
 
 void report_motor(){
-  if(motor_timer > timer_threshold)
-  {
+//  if(motor_timer > timer_threshold)
+//  {
     Serial.print('z');
     Serial.println(motor_reading);
     motor_timer = 0;
-  }
+//  }
 }
 
 
 void report_state(){
-  if(sensor_timer > timer_threshold)
-  {
+//  if(sensor_timer > timer_threshold)
+//  {
     Serial.print('s');
     Serial.println(sensor_reading);
     sensor_timer = 0;
-  }
+//  }
 }

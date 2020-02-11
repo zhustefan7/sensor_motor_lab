@@ -328,13 +328,14 @@ class motor_page(object):
         canvas.create_rectangle(20,self.height-90,600,self.height-20,fill="white",width=0)
         canvas.create_text(80,self.height-80,fill="darkblue",font="Times 10 italic bold",text="Sensor Reading:")
         canvas.create_text(80,self.height-30,fill="black",font="Times 10 italic bold",text=self.sensor_reading)
+       
+        sys.stdout.flush()
         self.receive_msg()
+       
         canvas.create_rectangle(20,self.height-200,600,self.height-130,fill="white",width=0)
         canvas.create_text(80,self.height-190,fill="darkblue",font="Times 10 italic bold",text="Motor State:")
         canvas.create_text(80,self.height-180,fill="black",font="Times 10 italic bold",text=self.motor_reading)
 
-        # sys.stdout.flush()
-        # self.receive_msg()
 
     def mousePressed(self,event):
         x = event.x
@@ -388,9 +389,9 @@ class motor_page(object):
             # sys.stdout.flush()
             # t2=threading.Thread(target=self.receive_msg)
             # t2.start()    
-            # self.receive_msg()
+            self.receive_msg()
             # ser.close()
-            pass
+            # pass
 
 
         #User command Input Box
