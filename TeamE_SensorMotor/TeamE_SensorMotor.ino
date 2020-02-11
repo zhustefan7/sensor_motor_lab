@@ -332,8 +332,9 @@ void parseInput()
   if (Serial.available() > 0) serialIn = Serial.readString();
   
   // Check if full input is received
-  if (serialIn.length() == 6)
-  {
+//  if (serialIn.length() == 6)
+//  {
+//    Serial.println(serialIn);
     // Extract first char from input
   char inChar = serialIn.charAt(0);
   serialIn.remove(0,1);
@@ -361,6 +362,7 @@ void parseInput()
       {
         newAngle = true;
         angle = newVal;
+        
       }
       else if(inChar == 'a'&& inChar1 =='v') 
       {
@@ -368,7 +370,7 @@ void parseInput()
         angle = newVal;
       }
    }
-  }
+//  }
 }
 
 void report_motor(){
