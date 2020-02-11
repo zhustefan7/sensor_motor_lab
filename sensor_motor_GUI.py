@@ -1,11 +1,7 @@
 import random
 from tkinter import *
 import os 
-# from xls_write import xls_write
 import argparse
-# import imutils
-# import cv2 as cv
-# import PySpin
 import numpy as np
 import time
 import datetime
@@ -206,32 +202,21 @@ class Frontpage(object):
         if self.b1_loc[0]<=x<=self.b1_loc[2] and self.b1_loc[1]<=y<=self.b1_loc[3]:
             page_bool = [False, True, False, False]
             motor_msg = 'm%03d'%1
-            # t2=threading.Thread(target=receive_msg, args=[page_bool, 1])
-            # t2.start()
-            # t2.join()
             print('motor mode: Servo')
             
         elif self.b2_loc[0]<=x<=self.b2_loc[2] and self.b2_loc[1]<=y<=self.b2_loc[3]:
             page_bool = [False, False, True, False]
             motor_msg = 'm%03d'%2
-            # t2=threading.Thread(target=receive_msg, args=[page_bool,2])
-            # t2.start()
-            # t2.join()
             print('motor mode: Stepper')
             
         elif self.b3_loc[0]<=x<=self.b3_loc[2] and self.b3_loc[1]<=y<=self.b3_loc[3]:
             page_bool = [False, False, False, True]
             motor_msg = 'm%03d'%3
-            # t2=threading.Thread(target=receive_msg, args=[page_bool,3])
-            # t2.start()
-            # t2.join()
             print('motor mode: DC brushless')
         
         # control_msg ='c%03d'%1
         # send_command(control_msg)
         send_command_threading(motor_msg)
-        # send_command(motor_msg)
-        # t2.join()
         return 
 
 
@@ -260,13 +245,6 @@ class motor_page(object):
         # self.t3.join()
         pass
 
-    # def receive_msg(self):
-    #     global sensor_reading
-    #     while True:
-    #         sensor_reading = ser.readline()
-    #         sensor_reading= sensor_reading.decode('ASCII')
-    #         sensor_reading = sensor_reading[1:]
-    #     return 
 
     def receive_msg(self):
         reading = ser.read(4)
@@ -403,7 +381,6 @@ class motor_page(object):
             page_bool = [True, False, False, False]
             self.control_modes = [True,False] 
             msg = 'm%03d'%0
-            # send_command(msg)
             send_command_threading(msg)
             print('front page')
 
@@ -412,10 +389,12 @@ class motor_page(object):
         if 800+button_width<=x<=800+2*button_width and 400<=y<=400+button_height:
             print('here')
             # self.abort=True
-            self.receive_msg()
+            sys.stdout.flush()
+            
+            t2=threading.Thread(target=self.receive_msg)
+            t2.start()    
+            # self.receive_msg()
             pass
-
-
 
 
         #User command Input Box
@@ -450,11 +429,6 @@ class motor_page(object):
         if self.label_box:
             canvas.create_line(1100-250+len(self.user_command)*7,50,1100-250+len(self.user_command)*7,80,fill='darkblue')     # this is the cursor
     
-    
-
-
-
-
 
 
         # super().draw_page(canvas)
