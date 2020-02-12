@@ -314,12 +314,15 @@ void parseInput()
   if (Serial.available() > 0) serialIn = Serial.readString();
   
   // Check if full input is received
-  if (serialIn.length() == 4)
+  if (serialIn.length() == 5)
   {
     // Extract first char from input
-    //Serial.println(serialIn);
   char inChar = serialIn.charAt(0);
   serialIn.remove(0,1);
+
+  char inChar2 = serialIn.charAt(0);
+  serialIn.remove(0,1);
+  
     // Check if remaining is a number
     if(serialIn.toInt() || (serialIn[0]=='0'&& serialIn[2]=='0'&& serialIn[1]=='0'))
     {
@@ -327,7 +330,7 @@ void parseInput()
       int newVal = serialIn.toInt();
       
       // Update State
-      if(inChar == 'm'){
+      if(inChar == 'm' && inChar1 =='m'){
         prev_motor = motor;
         motor = newVal;
         if (newVal !=  prev_motor){
@@ -335,10 +338,14 @@ void parseInput()
         }
        }
        
-      else if(inChar == 'c') control = newVal;
-      else if(inChar == 'a') 
+      else if(inChar == 'c'&& inChar1 =='c') control = newVal;
+      else if(inChar == 'a'&& inChar1 =='a') 
       {
         newAngle = true;
+        angle = newVal;
+      }
+      else if(inChar == 'a'&& inChar1 =='v') 
+      {
         angle = newVal;
       }
    }
