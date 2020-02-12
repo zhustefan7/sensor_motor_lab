@@ -64,6 +64,11 @@ double PWMvalue = 0;  //Computed PWM requirement
 double Kp, Ki, Kd;
 PID Motor_PID(&Feed, &PWMvalue, &Set, 0, 0, 0, DIRECT);
 
+// Timer Stuff
+int motor_timer = 0;
+int sensor_timer = 0;
+int timer_threshold = 500;
+
 
 void setup()
 {
@@ -101,6 +106,9 @@ void loop()
 //  Serial.println(control);
 //  Serial.print("angle:");
 //  Serial.println(angle);
+
+motor_timer += 1;
+sensor_timer += 1;
 
 
   parseInput();
@@ -354,12 +362,20 @@ void parseInput()
 }
 
 void report_motor(){
-  Serial.print('z');
-  Serial.println(motor_reading);
+  if(motor_timer > timer_threshold)
+  {
+    Serial.print('z');
+    Serial.println(motor_reading);
+    motor_timer = 0;
+  }
 }
 
 
 void report_state(){
-  Serial.print('s');
-  Serial.println(sensor_reading);
+  if(sensor_timer > timer_threshold)
+  {
+    Serial.print('s');
+    Serial.println(sensor_reading);
+    sensor_timer = 0;
+  }
 }
