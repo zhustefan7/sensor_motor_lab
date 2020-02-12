@@ -314,13 +314,13 @@ void parseInput()
   if (Serial.available() > 0) serialIn = Serial.readString();
   
   // Check if full input is received
-  if (serialIn.length() == 5)
+  if (serialIn.length() == 6)
   {
     // Extract first char from input
   char inChar = serialIn.charAt(0);
   serialIn.remove(0,1);
 
-  char inChar2 = serialIn.charAt(0);
+  char inChar1 = serialIn.charAt(0);
   serialIn.remove(0,1);
   
     // Check if remaining is a number
@@ -346,6 +346,7 @@ void parseInput()
       }
       else if(inChar == 'a'&& inChar1 =='v') 
       {
+        control = 2;
         angle = newVal;
       }
    }
